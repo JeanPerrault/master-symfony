@@ -6,7 +6,9 @@ use App\Entity\Product;
 use App\Form\ProductType;
 use App\Repository\ProductRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class ProductController extends AbstractController
@@ -14,15 +16,10 @@ class ProductController extends AbstractController
     /**
      * @Route("/product/create", name="product_create")
      * @param Request $request
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
     public function create(Request $request)
     {
-        $repository = $this->getDoctrine()->getRepository(Product::class);
-        $products = $repository->findAll();
-
-        dump($products);
-
         $product = new Product();
         $form = $this->createForm(ProductType::class, $product);
 
@@ -42,10 +39,22 @@ class ProductController extends AbstractController
     }
 
     /**
+     * @Route("/product/{id}", name="product_show")
+     * @param Product $product
+     * @return Response
+     */
+    public function show(Product $product)
+    {
+        return $this->render('product/show.html.twig', [
+            'product' => $product
+        ]);
+    }
+
+    /**
      * Créer la route /product où on affichera tous les produits de la base de données.
      * On utilisera les cards de Bootstrap.
      *
-     * @Route("/product/list", name="product_list")
+     * @Route("/product", name="product_list")
      * @param ProductRepository $repository
      * @return Response
      */
@@ -54,31 +63,55 @@ class ProductController extends AbstractController
         $products = $repository->findAll();
 
         return $this->render('product/list.html.twig', [
-            'products' => $products
+           'products' => $products
         ]);
     }
-
-    
 
     /**
-     * @Route("/product/{id}", name="product_show")
-     * @param $id
-     * @param ProductRepository, $repository
+     * @Route("/product/edit/{id}", name="product_edit")
+     * @param Request $request
+     * @param Product $product
      * @return Response
      */
-    public function show($id, ProductRepository $repository)
+    public function edit(Request $request, Product $product)
     {
-        /*$product = $this->getDoctrine()->getRepository(Product::class)->find($id);*/
-        $product = $repository->find($id);
+        $form = $this->createForm(ProductType::class, $product);
 
-        if(!$product){
-            throw $this->createNotFoundException(
-                'Le produit '.$id.' n\'existe pas'
-            );        }
+        $form->handleRequest($request);
 
-        return $this->render('product/show.html.twig',[
-            'product'=> $product
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Le persist est optionnel
+            $this->getDoctrine()->getManager()->flush();
+            $this->addFlash('success', 'Le produit '.$product->getId().' a bien été modifié.');
+
+            return $this->redirectToRoute('product_list');
+        }
+
+        return $this->render('product/edit.html.twig', [
+            'product' => $product,
+            'form' => $form->createView()
         ]);
     }
 
+    /**
+     * @Route("/product/delete/{id}", name="product_delete", methods={"POST"})
+     * @param Request $request
+     * @param Product $product
+     * @return RedirectResponse
+     */
+    public function delete(Request $request, Product $product)
+    {
+        if (!$this->isCsrfTokenValid('delete', $request->get('token'))) {
+            return $this->redirectToRoute('product_list');
+        }
+
+        // $em = $entityManager
+        $em = $this->getDoctrine()->getManager();
+        $em->remove($product);
+        $em->flush();
+
+        $this->addFlash('success', 'Le produit '.$product->getName().' a bien été supprimé');
+
+        return $this->redirectToRoute('product_list');
+    }
 }

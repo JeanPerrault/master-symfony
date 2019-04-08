@@ -18,26 +18,22 @@ class Product
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     *
      * @Assert\NotBlank()
-     * @Assert\Length(min="3")
+     * @ORM\Column(type="string", length=255)
      */
     private $name;
 
     /**
-     * @ORM\Column(type="text")
-     *
      * @Assert\NotBlank()
-     * @Assert\Length(min="15")
+     * @Assert\Length(min="10")
+     * @ORM\Column(type="text")
      */
     private $description;
 
     /**
-     * @ORM\Column(type="integer")
-     *
-     * @Assert\GreaterThan(0)
      * @Assert\NotBlank()
+     * @Assert\GreaterThan(0)
+     * @ORM\Column(type="integer")
      */
     private $price;
 
