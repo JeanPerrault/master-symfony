@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Product;
 use App\Form\ProductType;
 use App\Repository\ProductRepository;
+use Cocur\Slugify\SlugifyInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,7 +19,7 @@ class ProductController extends AbstractController
      * @param Request $request
      * @return Response
      */
-    public function create(Request $request)
+    public function create(Request $request, SlugifyInterface $slugify)
     {
         $product = new Product();
         $form = $this->createForm(ProductType::class, $product);
@@ -26,6 +27,10 @@ class ProductController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            $slug = $slugify->slugify($product->getName());
+            $product->setSlug($slug);
+
             // Ajouter le produit en BDD
             $manager = $this->getDoctrine()->getManager();
 
@@ -71,15 +76,18 @@ class ProductController extends AbstractController
      * @Route("/product/edit/{id}", name="product_edit")
      * @param Request $request
      * @param Product $product
+     * @param SlugifyInterface $slugify
      * @return Response
      */
-    public function edit(Request $request, Product $product)
+    public function edit(Request $request, Product $product, SlugifyInterface $slugify)
     {
         $form = $this->createForm(ProductType::class, $product);
 
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $slug = $slugify->slugify($product->getName());
+            $product->setSlug($slug);
             // Le persist est optionnel
             $this->getDoctrine()->getManager()->flush();
             $this->addFlash('success', 'Le produit '.$product->getId().' a bien été modifié.');

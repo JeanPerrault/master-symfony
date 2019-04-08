@@ -3,12 +3,23 @@
 namespace App\DataFixtures;
 
 use App\Entity\Product;
+use Cocur\Slugify\SlugifyInterface;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\Persistence\ObjectManager;
 use Faker\Factory;
 
 class AppFixtures extends Fixture
 {
+    /**
+     * @var SlugifyInterface
+     */
+    private $slugify;
+
+    public function __construct(SlugifyInterface $slugify)
+    {
+        $this->slugify = $slugify;
+    }
+
     public function load(ObjectManager $manager)
     {
         $faker = Factory::create('fr_FR');
@@ -20,6 +31,10 @@ class AppFixtures extends Fixture
             ]));
             $product->setDescription($faker->text(300));
             $product->setPrice($faker->randomNumber(5) * 100);
+            // je genere un slug
+            // $this->slugify->slugify('iPhone X'); // iphone-x
+            $slug = $this->slugify->slugify($product->getName());
+            $product->setSlug($slug);
             $manager->persist($product);
         }
 
