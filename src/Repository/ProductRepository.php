@@ -19,6 +19,18 @@ class ProductRepository extends ServiceEntityRepository
         parent::__construct($registry, Product::class);
     }
 
+    public function findMoreExpensive()
+    {
+        $queryBuilder = $this->createQueryBuilder('p')
+            //->where('p.name LIKE :name')
+            //->setParameter('name', '%iphone%')
+            ->orderBy('p.price','DESC')
+            ->setMaxResults(4)
+            ->getQuery();
+
+        return $queryBuilder-> execute();
+    }
+
     // /**
     //  * @return Product[] Returns an array of Product objects
     //  */
